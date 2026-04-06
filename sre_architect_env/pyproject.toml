@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openenv-sre-architect-env"
+version = "0.1.0"
+description = "Context-aware microservice economics simulation for SRE policy evaluation"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "openenv-core[core]>=0.2.2",
+  "fastapi>=0.115.0",
+  "pydantic>=2.10.0",
+  "uvicorn>=0.24.0",
+  "requests>=2.31.0",
+  "openai>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+]
+
+[project.scripts]
+server = "server.app:main"
+
+[tool.setuptools]
+include-package-data = true
+packages = ["sre_architect_env", "sre_architect_env.server"]
+package-dir = { "sre_architect_env" = ".", "sre_architect_env.server" = "server" }
