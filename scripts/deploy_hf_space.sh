@@ -15,6 +15,9 @@ if [[ -z "${HF_REPO_ID:-}" ]]; then
   exit 1
 fi
 
+# ADD THIS LINE RIGHT HERE:
+cp "${ROOT_DIR}/inference.py" "${ENV_DIR}/inference.py"
+
 cd "${ENV_DIR}"
 
 echo "Running openenv validate..."
@@ -27,3 +30,4 @@ echo "Pushing to Hugging Face Space ${HF_REPO_ID}..."
 "${OPENENV_BIN}" push --repo-id "${HF_REPO_ID}"
 
 echo "Deployment complete."
+
