@@ -263,9 +263,11 @@ def run_task(
 
 
 def main() -> int:
-    api_base_url = _require_env("API_BASE_URL")
-    model_name = _require_env("MODEL_NAME")
-    hf_token = _require_env("HF_TOKEN")
+    api_base_url = os.getenv("API_BASE_URL", "https://api-inference.huggingface.co/v1")
+    model_name = os.getenv("MODEL_NAME", "meta-llama/Meta-Llama-3.1-8B-Instruct")
+    hf_token = os.getenv("HF_TOKEN")
+    if not hf_token:
+        raise RuntimeError("Missing required environment variable: HF_TOKEN")
 
     env_base_url = os.getenv("ENV_BASE_URL", DEFAULT_ENV_BASE_URL).rstrip("/")
     session = requests.Session()
