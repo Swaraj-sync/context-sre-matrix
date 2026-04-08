@@ -30,8 +30,16 @@ except ImportError:
     )
 
 
+_EPS = 1e-4
+
+
 def _clamp01(value: float) -> float:
     return max(0.0, min(1.0, value))
+
+
+def _strict_clamp01(value: float) -> float:
+    """Clamp to the open interval (0, 1), required by the hackathon validator."""
+    return max(_EPS, min(1.0 - _EPS, value))
 
 
 def _primary_secondary_scores(context: TeamContext, health: SystemHealth) -> tuple[float, float]:
@@ -211,11 +219,11 @@ def grade_episode(
     """Compute final task score and diagnostic metrics."""
     if not steps:
         return {
-            "overall_score": 0.0,
-            "avg_step_score": 0.0,
-            "safety_score": 0.0,
-            "adaptation_score": 0.0,
-            "incident_score": 0.0,
+            "overall_score": _EPS,
+            "avg_step_score": _EPS,
+            "safety_score": _EPS,
+            "adaptation_score": _EPS,
+            "incident_score": _EPS,
         }
 
     avg_step_score = _clamp01(mean(step.reward_breakdown.total for step in steps))
@@ -242,13 +250,13 @@ def grade_episode(
         overall = _clamp01(0.32 * avg_step_score + 0.18 * safety_score + 0.50 * incident_score)
 
     result: Dict[str, float] = {
-        "overall_score": round(overall, 6),
-        "avg_step_score": round(avg_step_score, 6),
-        "safety_score": round(safety_score, 6),
-        "adaptation_score": round(adaptation_score, 6),
-        "incident_score": round(incident_score, 6),
+        "overall_score": round(_strict_clamp01(overall), 6),
+        "avg_step_score": round(_strict_clamp01(avg_step_score), 6),
+        "safety_score": round(_strict_clamp01(safety_score), 6),
+        "adaptation_score": round(_strict_clamp01(adaptation_score), 6),
+        "incident_score": round(_strict_clamp01(incident_score), 6),
     }
     if incident_root_pr_id:
-        result["incident_root_present"] = 1.0
+        result["incident_root_present"] = 1.0 - _EPS
     return result
 
