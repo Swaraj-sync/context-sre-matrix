@@ -1,3 +1,16 @@
+---
+title: Sre Architect Environment Server
+emoji: 🔊
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+app_port: 8000
+base_path: /web
+tags:
+  - openenv
+---
+
 # Context-Aware SRE Benchmark (`sre_architect_env`)
 
 `sre_architect_env` is an OpenEnv-compatible environment where an AI policy acts as an on-call SRE:
