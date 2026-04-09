@@ -65,4 +65,7 @@ def test_step_rewards_and_episode_scores_are_normalized():
             assert 0.0 <= float(obs.reward_breakdown.total) <= 1.0
 
         assert env.state.episode_score is not None
-        assert 0.0 <= float(env.state.episode_score) <= 1.0
+        score = float(env.state.episode_score)
+        assert 0.0 < score < 1.0, f"task {task_id}: episode_score={score} not in (0,1)"
+        for key, val in env.state.grade_metrics.items():
+            assert 0.0 < val < 1.0, f"task {task_id}: {key}={val} not in (0,1)"
