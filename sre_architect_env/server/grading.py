@@ -45,23 +45,23 @@ def _strict_clamp01(value: float) -> float:
 def _primary_secondary_scores(context: TeamContext, health: SystemHealth) -> tuple[float, float]:
     """Compute objective-aligned scores for the given context."""
     if context == TeamContext.PAYMENTS:
-        primary = _clamp01(1.0 - (health.availability_risk_pct / 0.015))
-        consistency_score = _clamp01(1.0 - (health.consistency_gap / 0.45))
-        reliability_score = _clamp01(1.0 - (health.error_rate_pct / 2.0))
+        primary = _strict_clamp01(1.0 - (health.availability_risk_pct / 0.015))
+        consistency_score = _strict_clamp01(1.0 - (health.consistency_gap / 0.45))
+        reliability_score = _strict_clamp01(1.0 - (health.error_rate_pct / 2.0))
         secondary = 0.65 * consistency_score + 0.35 * reliability_score
         return primary, secondary
 
     if context == TeamContext.SEARCH:
-        primary = _clamp01((85.0 - health.latency_ms) / 35.0)
-        risk_score = _clamp01(1.0 - (health.availability_risk_pct / 0.04))
-        cost_score = _clamp01((170.0 - health.compute_cost_index) / 80.0)
+        primary = _strict_clamp01((85.0 - health.latency_ms) / 35.0)
+        risk_score = _strict_clamp01(1.0 - (health.availability_risk_pct / 0.04))
+        cost_score = _strict_clamp01((170.0 - health.compute_cost_index) / 80.0)
         secondary = 0.70 * risk_score + 0.30 * cost_score
         return primary, secondary
 
     # TeamContext.BATCH
-    primary = _clamp01((150.0 - health.compute_cost_index) / 70.0)
-    latency_score = _clamp01((135.0 - health.latency_ms) / 55.0)
-    risk_score = _clamp01(1.0 - (health.availability_risk_pct / 0.05))
+    primary = _strict_clamp01((150.0 - health.compute_cost_index) / 70.0)
+    latency_score = _strict_clamp01((135.0 - health.latency_ms) / 55.0)
+    risk_score = _strict_clamp01(1.0 - (health.availability_risk_pct / 0.05))
     secondary = 0.50 * latency_score + 0.50 * risk_score
     return primary, secondary
 
@@ -84,21 +84,21 @@ def _decision_alignment(
 
     if action.pr_decision == PRDecision.ROLLBACK:
         if rollback_target_matched_root:
-            return 1.0
+            return 1.0 - _EPS
         return 0.55
 
     if context == TeamContext.PAYMENTS:
         if action.pr_decision == PRDecision.REJECT and risky_for_payments:
-            return 1.0
+            return 1.0 - _EPS
         if action.pr_decision == PRDecision.APPROVE and strong_safety_upgrade:
-            return 1.0
+            return 1.0 - _EPS
         if action.pr_decision == PRDecision.APPROVE and risky_for_payments:
-            return 0.0
+            return _EPS
         return 0.65
 
     if context == TeamContext.SEARCH:
         if action.pr_decision == PRDecision.APPROVE and latency_boost:
-            return 1.0
+            return 1.0 - _EPS
         if action.pr_decision == PRDecision.REJECT and latency_boost:
             return 0.35
         if action.pr_decision == PRDecision.APPROVE and impact.availability_risk_delta_pct > 0.0050:
@@ -107,7 +107,7 @@ def _decision_alignment(
 
     # TeamContext.BATCH
     if action.pr_decision == PRDecision.APPROVE and impact.compute_cost_delta_pct < -1.0:
-        return 1.0
+        return 1.0 - _EPS
     if action.pr_decision == PRDecision.REJECT and impact.compute_cost_delta_pct < -1.0:
         return 0.40
     return 0.70
@@ -166,13 +166,13 @@ def compute_step_reward(
         penalties += 0.08
 
     raw_total = (0.55 * primary_score) + (0.30 * secondary_score) + (0.15 * alignment_score) - penalties
-    total = _clamp01(raw_total)
+    total = _strict_clamp01(raw_total)
 
     return RewardBreakdown(
         total=round(total, 6),
-        primary_objective=round(primary_score, 6),
-        secondary_objective=round(secondary_score, 6),
-        decision_alignment=round(alignment_score, 6),
+        primary_objective=round(_strict_clamp01(primary_score), 6),
+        secondary_objective=round(_strict_clamp01(secondary_score), 6),
+        decision_alignment=round(_strict_clamp01(alignment_score), 6),
         penalties=round(penalties, 6),
         safety_breaches=breaches,
     )
