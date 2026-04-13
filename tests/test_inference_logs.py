@@ -24,6 +24,7 @@ def test_start_step_end_log_snapshots(capsys):
             "steps": 6,
             "total_reward": 3.5,
             "episode_score": 0.81,
+            "task_score": 0.81,
         },
     )
 
@@ -34,7 +35,10 @@ def test_start_step_end_log_snapshots(capsys):
         lines[1]
         == '[STEP] {"task_id":1,"step":1,"action":{"pr_decision":"REJECT"},"reward":0.75,"done":false}'
     )
-    assert lines[2] == '[END] {"task_id":1,"steps":6,"total_reward":3.5,"episode_score":0.81}'
+    assert (
+        lines[2]
+        == '[END] {"task_id":1,"steps":6,"total_reward":3.5,"episode_score":0.81,"task_score":0.81}'
+    )
 
     for line in lines:
         tag, payload = line.split(" ", 1)

@@ -15,6 +15,7 @@ TASK_IDS = (1, 2, 3)
 SEED = 7
 REQUEST_TIMEOUT_S = 30
 DEFAULT_ENV_BASE_URL = "http://localhost:8000"
+_EPS = 1e-4
 
 ALLOWED_DECISIONS = {"APPROVE", "REJECT", "ROLLBACK"}
 ALLOWED_WRITE_MODES = {"SYNC", "ASYNC"}
@@ -26,6 +27,13 @@ def _require_env(name: str) -> str:
     if not value:
         raise RuntimeError(f"Missing required environment variable: {name}")
     return value
+
+
+def _strict_task_score(value: Optional[float]) -> float:
+    """Normalize task scores to strict open interval (0, 1)."""
+    if value is None:
+        return _EPS
+    return max(_EPS, min(1.0 - _EPS, float(value)))
 
 
 def _extract_json(text: str) -> Dict[str, Any]:
@@ -243,18 +251,23 @@ def run_task(
             },
         )
 
+    raw_episode_score = env.state().episode_score
+    task_score = round(_strict_task_score(raw_episode_score), 6)
+
     _log(
         "[END]",
         {
             "task_id": task_id,
             "steps": step_count,
             "total_reward": round(total_reward, 6),
-            "episode_score": env.state().episode_score,
+            "episode_score": raw_episode_score,
+            "task_score": task_score,
         },
     )
 
     return {
         "task_id": task_id,
+        "task_score": task_score,
         "steps": step_count,
         "total_reward": round(total_reward, 6),
         "final_context": observation.get("active_context"),
